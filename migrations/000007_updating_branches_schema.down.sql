@@ -1,0 +1,1 @@
+ALTER TABLE branches DROP COLUMN head_commit_id;
