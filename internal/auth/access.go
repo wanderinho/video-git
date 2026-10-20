@@ -1,13 +1,10 @@
 package auth
 
 import (
-	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
-
-var ErrInvalidToken = errors.New("invalid token")
 
 type Claims struct {
 	UserID int64 `json:"user_id"`
