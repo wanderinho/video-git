@@ -3,6 +3,8 @@ package users
 import (
 	"errors"
 	"net/http"
+	"time"
+	"video-git/internal/auth"
 	"video-git/internal/users/dto"
 
 	"github.com/labstack/echo/v4"
@@ -10,11 +12,15 @@ import (
 
 type UserHandler struct {
 	service *Service
+	refreshTTL time.Duration
+	cookieSecure bool
 }
 
-func NewUserHandler(service *Service) *UserHandler {
+func NewUserHandler(service *Service, refreshTTL time.Duration, cookieSecure bool) *UserHandler {
 	return &UserHandler{
 		service: service,
+		refreshTTL: refreshTTL,
+		cookieSecure: cookieSecure,
 	}
 }
 
@@ -53,5 +59,7 @@ func (uh *UserHandler) LoginUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, dto.UserLoginResponse{ID: u.ID, Username: u.Username, Email: u.Email, CreatedAt: u.CreatedAt})
+	auth.SetRefreshCookie(c, u.refreshToken, uh.refreshTTL, uh.cookieSecure)
+
+	return c.JSON(http.StatusOK, dto.UserLoginResponse{ID: u.ID, Username: u.Username, Email: u.Email, CreatedAt: u.CreatedAt, AccessToken: u.accessToken})
 }

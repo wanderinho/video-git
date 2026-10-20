@@ -9,3 +9,9 @@ type User struct {
 	PasswordHash string
 	CreatedAt time.Time
 }
+
+type UserWithTokens struct {
+	User
+	accessToken string
+	refreshToken string
+}
