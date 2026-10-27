@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -73,6 +74,15 @@ func main() {
 	e.POST("/auth/register", userHandler.CreateUser)
 	e.POST("/auth/login", userHandler.LoginUser)
 	e.POST("/auth/refresh", tHandler.RefreshTokens)
+
+	api := e.Group("/api", tManager.Middleware())
+	api.GET("/me", func(c echo.Context) error {
+		id, ok := auth.UserIDFromContext(c)
+		if !ok {
+			return c.NoContent(http.StatusInternalServerError)
+		}
+		return c.JSON(http.StatusOK, echo.Map{"user_id": id})
+	})
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
