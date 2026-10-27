@@ -35,6 +35,7 @@ func (th *TokenHandler) RefreshTokens(c echo.Context) error {
 		if errors.Is(err, ErrTokenNotFound) {
 			return c.JSON(http.StatusUnauthorized, echo.Map{"message": "unauthorized"})
 		} else {
+			c.Logger().Error(err)
 			return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
 		}
 	}

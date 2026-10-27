@@ -37,6 +37,7 @@ func (uh *UserHandler) CreateUser(c echo.Context) error {
 		} else if errors.Is(err, ErrAlreadyExists) {
 			return c.JSON(http.StatusConflict, echo.Map{"message": "username or email already exists"})
 		}
+		c.Logger().Error(err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
 	}
 
@@ -56,6 +57,7 @@ func (uh *UserHandler) LoginUser(c echo.Context) error {
 		} else if errors.Is(err, ErrInvalidCredentials) {
 			return c.JSON(http.StatusUnauthorized, echo.Map{"message": "incorrect username or password"})
 		}
+		c.Logger().Error(err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
 	}
 
