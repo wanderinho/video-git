@@ -6,15 +6,15 @@ import (
 )
 
 type TokenService struct {
-	tm *TokenManager
-	tr *TokenRepository
+	tm         *TokenManager
+	tr         *TokenRepository
 	refreshTTL time.Duration
 }
 
 func NewTokenService(tm *TokenManager, tr *TokenRepository, refreshTTL time.Duration) *TokenService {
 	return &TokenService{
-		tm: tm,
-		tr: tr,
+		tm:         tm,
+		tr:         tr,
 		refreshTTL: refreshTTL,
 	}
 }
@@ -38,7 +38,6 @@ func (ts *TokenService) GetTokenPair(ctx context.Context, userID int64) (string,
 
 	return access, refresh, nil
 }
-
 
 func (ts *TokenService) UpdateTokenPair(ctx context.Context, refresh string) (string, string, error) {
 	refresh_hash := HashRefreshToken(refresh)

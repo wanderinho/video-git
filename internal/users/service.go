@@ -8,13 +8,13 @@ import (
 )
 
 type Service struct {
-	repo Repository
+	repo  Repository
 	token TokenIssuer
 }
 
-type Repository interface {          
-    Create(ctx context.Context, user User) (User, error)
-    FindByUsername(ctx context.Context, username string) (User, error)
+type Repository interface {
+	Create(ctx context.Context, user User) (User, error)
+	FindByUsername(ctx context.Context, username string) (User, error)
 }
 
 type TokenIssuer interface {
@@ -24,7 +24,7 @@ type TokenIssuer interface {
 
 func NewService(r Repository, ti TokenIssuer) *Service {
 	return &Service{
-		repo: r,
+		repo:  r,
 		token: ti,
 	}
 }

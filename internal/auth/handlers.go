@@ -8,17 +8,16 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-
 type TokenHandler struct {
-	ts *TokenService
-	refreshTTL time.Duration
+	ts           *TokenService
+	refreshTTL   time.Duration
 	cookieSecure bool
 }
 
 func NewTokenHandler(ts *TokenService, refreshTTL time.Duration, cookieSecure bool) *TokenHandler {
 	return &TokenHandler{
-		ts: ts,
-		refreshTTL: refreshTTL,
+		ts:           ts,
+		refreshTTL:   refreshTTL,
 		cookieSecure: cookieSecure,
 	}
 }
@@ -41,6 +40,6 @@ func (th *TokenHandler) RefreshTokens(c echo.Context) error {
 	}
 
 	SetRefreshCookie(c, refresh, th.refreshTTL, th.cookieSecure)
-	
+
 	return c.JSON(http.StatusOK, echo.Map{"access_token": access})
 }

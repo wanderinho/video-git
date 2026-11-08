@@ -4,14 +4,14 @@ import "time"
 
 type UserRegisterRequest struct {
 	Username string `json:"username"`
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 type UserRegisterResponse struct {
-	ID int64 `json:"id"`
-	Username string `json:"username"`
-	Email string `json:"email"`
+	ID        int64     `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -21,9 +21,9 @@ type UserLoginRequest struct {
 }
 
 type UserLoginResponse struct {
-	ID int64 `json:"id"`
-	Username string `json:"username"`
-	Email string `json:"email"`
-	CreatedAt time.Time `json:"created_at"`
-	AccessToken string `json:"access_token"`
+	ID          int64     `json:"id"`
+	Username    string    `json:"username"`
+	Email       string    `json:"email"`
+	CreatedAt   time.Time `json:"created_at"`
+	AccessToken string    `json:"access_token"`
 }

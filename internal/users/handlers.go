@@ -11,15 +11,15 @@ import (
 )
 
 type UserHandler struct {
-	service *Service
-	refreshTTL time.Duration
+	service      *Service
+	refreshTTL   time.Duration
 	cookieSecure bool
 }
 
 func NewUserHandler(service *Service, refreshTTL time.Duration, cookieSecure bool) *UserHandler {
 	return &UserHandler{
-		service: service,
-		refreshTTL: refreshTTL,
+		service:      service,
+		refreshTTL:   refreshTTL,
 		cookieSecure: cookieSecure,
 	}
 }

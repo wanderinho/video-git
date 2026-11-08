@@ -32,10 +32,9 @@ func (pr *PostgresRepository) Create(ctx context.Context, user User) (User, erro
 	return user, nil
 }
 
-
 func (pr *PostgresRepository) FindByUsername(ctx context.Context, username string) (User, error) {
 	var user User
-	
+
 	err := pr.db.QueryRow(ctx, "SELECT * FROM users WHERE username = $1", username).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -46,4 +45,3 @@ func (pr *PostgresRepository) FindByUsername(ctx context.Context, username strin
 
 	return user, nil
 }
-

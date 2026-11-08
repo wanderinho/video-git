@@ -15,14 +15,13 @@ func hashPassword(password string) (string, error) {
 	return string(hashed), nil
 }
 
-
 func checkPassword(hash, password string) error {
 	if len(password) > 72 {
 		return ErrInvalidCredentials
 	}
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-    	return ErrInvalidCredentials
+		return ErrInvalidCredentials
 	}
 	return err
 }
