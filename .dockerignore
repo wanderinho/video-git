@@ -1,0 +1,5 @@
+/migrations
+docker-compose.yml
+server.Dockerfile
+.dockerignore
+.env

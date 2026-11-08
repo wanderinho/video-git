@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -18,7 +19,7 @@ import (
 func main() {
 	// загрузка переменных окружения в процесс
 	err := godotenv.Load()
-	if err != nil {
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		log.Fatalf("загрузка .env: %v", err)
 	}
 
