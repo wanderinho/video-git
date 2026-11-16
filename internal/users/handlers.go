@@ -5,18 +5,17 @@ import (
 	"net/http"
 	"time"
 	"video-git/internal/auth"
-	"video-git/internal/users/dto"
-
+	
 	"github.com/labstack/echo/v4"
 )
 
 type UserHandler struct {
-	service      *Service
+	service      *UserService
 	refreshTTL   time.Duration
 	cookieSecure bool
 }
 
-func NewUserHandler(service *Service, refreshTTL time.Duration, cookieSecure bool) *UserHandler {
+func NewUserHandler(service *UserService, refreshTTL time.Duration, cookieSecure bool) *UserHandler {
 	return &UserHandler{
 		service:      service,
 		refreshTTL:   refreshTTL,
@@ -25,7 +24,7 @@ func NewUserHandler(service *Service, refreshTTL time.Duration, cookieSecure boo
 }
 
 func (uh *UserHandler) CreateUser(c echo.Context) error {
-	var registerReq dto.UserRegisterRequest
+	var registerReq UserRegisterRequest
 	if err := c.Bind(&registerReq); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid request body"})
 	}
@@ -41,11 +40,11 @@ func (uh *UserHandler) CreateUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
 	}
 
-	return c.JSON(http.StatusCreated, dto.UserRegisterResponse{ID: u.ID, Username: u.Username, Email: u.Email, CreatedAt: u.CreatedAt})
+	return c.JSON(http.StatusCreated, UserRegisterResponse{ID: u.ID, Username: u.Username, Email: u.Email, CreatedAt: u.CreatedAt})
 }
 
 func (uh *UserHandler) LoginUser(c echo.Context) error {
-	var loginReq dto.UserLoginRequest
+	var loginReq UserLoginRequest
 	if err := c.Bind(&loginReq); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid request body"})
 	}
@@ -63,5 +62,5 @@ func (uh *UserHandler) LoginUser(c echo.Context) error {
 
 	auth.SetRefreshCookie(c, u.refreshToken, uh.refreshTTL, uh.cookieSecure)
 
-	return c.JSON(http.StatusOK, dto.UserLoginResponse{ID: u.ID, Username: u.Username, Email: u.Email, CreatedAt: u.CreatedAt, AccessToken: u.accessToken})
+	return c.JSON(http.StatusOK, UserLoginResponse{ID: u.ID, Username: u.Username, Email: u.Email, CreatedAt: u.CreatedAt, AccessToken: u.accessToken})
 }

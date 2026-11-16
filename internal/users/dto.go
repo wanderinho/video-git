@@ -1,4 +1,4 @@
-package dto
+package users
 
 import "time"
 

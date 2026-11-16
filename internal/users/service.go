@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Service struct {
+type UserService struct {
 	repo  Repository
 	token TokenIssuer
 }
@@ -22,14 +22,14 @@ type TokenIssuer interface {
 	UpdateTokenPair(ctx context.Context, refresh string) (string, string, error)
 }
 
-func NewService(r Repository, ti TokenIssuer) *Service {
-	return &Service{
+func NewUserService(r Repository, ti TokenIssuer) *UserService {
+	return &UserService{
 		repo:  r,
 		token: ti,
 	}
 }
 
-func (s *Service) Register(ctx context.Context, username, email, password string) (User, error) {
+func (s *UserService) Register(ctx context.Context, username, email, password string) (User, error) {
 	hash, err := hashPassword(password)
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrPasswordTooLong) {
@@ -47,7 +47,7 @@ func (s *Service) Register(ctx context.Context, username, email, password string
 	return newUser, nil
 }
 
-func (s *Service) Login(ctx context.Context, username, password string) (UserWithTokens, error) {
+func (s *UserService) Login(ctx context.Context, username, password string) (UserWithTokens, error) {
 	u, err := s.repo.FindByUsername(ctx, username)
 	if err != nil {
 		return UserWithTokens{}, err
