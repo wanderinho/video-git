@@ -2,16 +2,16 @@ package users
 
 import "time"
 
-type User struct {
-	ID           int64
-	Username     string
-	Email        string
-	PasswordHash string
-	CreatedAt    time.Time
+type user struct {
+	id           int64
+	username     string
+	email        string
+	passwordHash string
+	createdAt    time.Time
 }
 
 type UserWithTokens struct {
-	User
+	user
 	accessToken  string
 	refreshToken string
 }

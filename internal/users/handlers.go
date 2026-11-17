@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 	"video-git/internal/auth"
-	
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -31,16 +31,20 @@ func (uh *UserHandler) CreateUser(c echo.Context) error {
 
 	u, err := uh.service.Register(c.Request().Context(), registerReq.Username, registerReq.Email, registerReq.Password)
 	if err != nil {
-		if errors.Is(err, ErrLongPassword) {
+		switch {
+		case errors.Is(err, ErrLongPassword):
 			return c.JSON(http.StatusBadRequest, echo.Map{"message": "password too long"})
-		} else if errors.Is(err, ErrAlreadyExists) {
+
+		case errors.Is(err, ErrAlreadyExists):
 			return c.JSON(http.StatusConflict, echo.Map{"message": "username or email already exists"})
+
+		default:
+			c.Logger().Error(err)
+			return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
 		}
-		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
 	}
 
-	return c.JSON(http.StatusCreated, UserRegisterResponse{ID: u.ID, Username: u.Username, Email: u.Email, CreatedAt: u.CreatedAt})
+	return c.JSON(http.StatusCreated, UserRegisterResponse{ID: u.id, Username: u.username, Email: u.email, CreatedAt: u.createdAt})
 }
 
 func (uh *UserHandler) LoginUser(c echo.Context) error {
@@ -51,16 +55,20 @@ func (uh *UserHandler) LoginUser(c echo.Context) error {
 
 	u, err := uh.service.Login(c.Request().Context(), loginReq.Username, loginReq.Password)
 	if err != nil {
-		if errors.Is(err, ErrInvalidCredentials) {
+		switch {
+		case errors.Is(err, ErrInvalidCredentials):
 			return c.JSON(http.StatusUnauthorized, echo.Map{"message": "incorrect username or password"})
-		} else if errors.Is(err, ErrInvalidCredentials) {
+			
+		case errors.Is(err, ErrInvalidCredentials):
 			return c.JSON(http.StatusUnauthorized, echo.Map{"message": "incorrect username or password"})
+
+		default:
+			c.Logger().Error(err)
+			return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
 		}
-		c.Logger().Error(err)
-		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
 	}
 
 	auth.SetRefreshCookie(c, u.refreshToken, uh.refreshTTL, uh.cookieSecure)
 
-	return c.JSON(http.StatusOK, UserLoginResponse{ID: u.ID, Username: u.Username, Email: u.Email, CreatedAt: u.CreatedAt, AccessToken: u.accessToken})
+	return c.JSON(http.StatusOK, UserLoginResponse{ID: u.id, Username: u.username, Email: u.email, CreatedAt: u.createdAt, AccessToken: u.accessToken})
 }

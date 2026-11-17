@@ -13,8 +13,8 @@ type UserService struct {
 }
 
 type Repository interface {
-	Create(ctx context.Context, user User) (User, error)
-	FindByUsername(ctx context.Context, username string) (User, error)
+	Create(ctx context.Context, us user) (user, error)
+	FindByUsername(ctx context.Context, username string) (user, error)
 }
 
 type TokenIssuer interface {
@@ -29,19 +29,19 @@ func NewUserService(r Repository, ti TokenIssuer) *UserService {
 	}
 }
 
-func (s *UserService) Register(ctx context.Context, username, email, password string) (User, error) {
+func (s *UserService) Register(ctx context.Context, username, email, password string) (user, error) {
 	hash, err := hashPassword(password)
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrPasswordTooLong) {
-			return User{}, ErrLongPassword
+			return user{}, ErrLongPassword
 		}
-		return User{}, err
+		return user{}, err
 	}
 
-	newUser := User{Username: username, Email: email, PasswordHash: hash}
+	newUser := user{username: username, email: email, passwordHash: hash}
 	newUser, err = s.repo.Create(ctx, newUser)
 	if err != nil {
-		return User{}, err
+		return user{}, err
 	}
 
 	return newUser, nil
@@ -53,11 +53,11 @@ func (s *UserService) Login(ctx context.Context, username, password string) (Use
 		return UserWithTokens{}, err
 	}
 
-	if err := checkPassword(u.PasswordHash, password); err != nil {
+	if err := checkPassword(u.passwordHash, password); err != nil {
 		return UserWithTokens{}, err
 	}
 
-	access, refresh, err := s.token.GetTokenPair(ctx, u.ID)
+	access, refresh, err := s.token.GetTokenPair(ctx, u.id)
 	if err != nil {
 		return UserWithTokens{}, err
 	}
