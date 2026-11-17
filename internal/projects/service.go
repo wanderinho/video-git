@@ -11,7 +11,8 @@ type ProjectService struct {
 }
 
 type Repository interface {
-	Create(ctx context.Context, createProjectForm CreateProjectParams) (CreatedProject, error)
+	Create(ctx context.Context, createProjectForm createProjectParams) (project, error)
+	ListByUser(ctx context.Context, userID int64) (userProjects, error)
 }
 
 func NewProjectService(projectRepo Repository) *ProjectService {
@@ -20,32 +21,36 @@ func NewProjectService(projectRepo Repository) *ProjectService {
 
 const maxNameLength = 100
 
-func (ps *ProjectService) Create(ctx context.Context, userID int64, desc *string, name, branchName string) (CreatedProject, error) {
+func (ps *ProjectService) Create(ctx context.Context, userID int64, desc *string, name, branchName string) (project, error) {
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return CreatedProject{}, ErrInvalidProjectName
+		return project{}, ErrInvalidProjectName
 	}
 
 	branchName = strings.TrimSpace(branchName)
 	if branchName == "" {
-		return CreatedProject{}, ErrInvalidBranchName
+		return project{}, ErrInvalidBranchName
 	}
 
 	if utf8.RuneCountInString(name) > maxNameLength || utf8.RuneCountInString(branchName) > maxNameLength {
-		return CreatedProject{}, ErrSizeName
+		return project{}, ErrSizeName
 	}
 
-	params := CreateProjectParams{
-		OwnerID:     userID,
-		Name:        name,
-		Description: desc,
-		BranchName:  branchName,
+	params := createProjectParams{
+		ownerID:     userID,
+		name:        name,
+		description: desc,
+		branchName:  branchName,
 	}
 
 	newProject, err := ps.projectRepo.Create(ctx, params)
 	if err != nil {
-		return CreatedProject{}, err
+		return project{}, err
 	}
 
 	return newProject, nil
+}
+
+func (ps *ProjectService) ListByUser(ctx context.Context, userID int64) (userProjects, error) {
+	return ps.projectRepo.ListByUser(ctx, userID)
 }

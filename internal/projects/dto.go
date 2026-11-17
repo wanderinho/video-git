@@ -6,9 +6,14 @@ type CreateProjectRequest struct {
 	BranchName string  `json:"branch_name"`
 }
 
-type CreateProjectResponse struct {
+type ProjectResponse struct {
 	ID            int64   `json:"id"`
 	Name          string  `json:"name"`
 	Desc          *string `json:"description"`
 	DefaultBranch string  `json:"default_branch"`
+}
+
+type ProjectsList struct {
+	UserID   int64             `json:"user_id"`
+	Projects []ProjectResponse `json:"projects"`
 }

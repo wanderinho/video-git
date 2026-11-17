@@ -1,15 +1,20 @@
 package projects
 
-type CreateProjectParams struct {
-	OwnerID     int64
-	Name        string
-	Description *string
-	BranchName  string
+type createProjectParams struct {
+	ownerID     int64
+	name        string
+	description *string
+	branchName  string
 }
 
-type CreatedProject struct {
-	ID int64
-	Name string
-	Desc *string
-	DefaultBranch string
+type project struct {
+	id            int64
+	name          string
+	desc          *string
+	defaultBranch string
+}
+
+type userProjects struct {
+	id           int64
+	projectsList []project
 }
