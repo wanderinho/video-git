@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -113,4 +114,25 @@ func (pr *ProjectRepository) ListByUser(ctx context.Context, userID int64) (user
     }
 
     return projects, nil
+}
+
+func (pr *ProjectRepository) GetProjectByID(ctx context.Context, projectID int64, userID int64) (fullProject, error) {
+    const query = `
+        SELECT p.id, p.owner_id, p.name, p.description, p.created_at, b.id, b.name
+        FROM projects p
+        JOIN project_members pm ON pm.project_id = p.id
+        JOIN branches b ON b.id = p.default_branch_id
+        WHERE p.id = $1 AND pm.user_id = $2
+    `
+
+    var project fullProject
+    err := pr.db.QueryRow(ctx, query, projectID, userID).Scan(&project.id, &project.ownerID, &project.name, &project.desc, &project.createdAt, &project.defaultBranchID, &project.defaultBranchName)
+    if err != nil {
+        if errors.Is(err, pgx.ErrNoRows) {
+            return fullProject{}, ErrProjectNotFound
+        }
+        return fullProject{}, fmt.Errorf("get project by id: %w", err)
+    }
+
+    return project, nil
 }

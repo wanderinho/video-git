@@ -1,5 +1,7 @@
 package projects
 
+import "time"
+
 type createProjectParams struct {
 	ownerID     int64
 	name        string
@@ -12,6 +14,16 @@ type project struct {
 	name          string
 	desc          *string
 	defaultBranch string
+}
+
+type fullProject struct {
+	id                int64
+	ownerID           int64
+	name              string
+	desc              *string
+	createdAt         time.Time
+	defaultBranchID   int64
+	defaultBranchName string
 }
 
 type userProjects struct {

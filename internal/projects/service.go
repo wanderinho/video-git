@@ -13,6 +13,7 @@ type ProjectService struct {
 type Repository interface {
 	Create(ctx context.Context, createProjectForm createProjectParams) (project, error)
 	ListByUser(ctx context.Context, userID int64) (userProjects, error)
+	GetProjectByID(ctx context.Context, projectID int64, userID int64) (fullProject, error)
 }
 
 func NewProjectService(projectRepo Repository) *ProjectService {
@@ -53,4 +54,8 @@ func (ps *ProjectService) Create(ctx context.Context, userID int64, desc *string
 
 func (ps *ProjectService) ListByUser(ctx context.Context, userID int64) (userProjects, error) {
 	return ps.projectRepo.ListByUser(ctx, userID)
+}
+
+func (ps *ProjectService) GetProjectByID(ctx context.Context, projectID, userID int64) (fullProject, error) {
+	return ps.projectRepo.GetProjectByID(ctx, projectID, userID)
 }
