@@ -58,7 +58,7 @@ func (uh *UserHandler) LoginUser(c echo.Context) error {
 		switch {
 		case errors.Is(err, ErrInvalidCredentials):
 			return c.JSON(http.StatusUnauthorized, echo.Map{"message": "incorrect username or password"})
-			
+
 		case errors.Is(err, ErrInvalidCredentials):
 			return c.JSON(http.StatusUnauthorized, echo.Map{"message": "incorrect username or password"})
 

@@ -73,7 +73,7 @@ func (pr *ProjectRepository) Create(ctx context.Context, createProjectForm creat
 }
 
 func (pr *ProjectRepository) ListByUser(ctx context.Context, userID int64) (userProjects, error) {
-    const query = `
+	const query = `
         SELECT p.id, p.name, p.description, b.name
         FROM project_members pm
         JOIN projects p ON p.id = pm.project_id
@@ -82,42 +82,42 @@ func (pr *ProjectRepository) ListByUser(ctx context.Context, userID int64) (user
         ORDER BY p.created_at DESC, p.id DESC
     `
 
-    rows, err := pr.db.Query(ctx, query, userID)
-    if err != nil {
-        return userProjects{}, fmt.Errorf("get user projects: %w", err)
-    }
-    defer rows.Close()
+	rows, err := pr.db.Query(ctx, query, userID)
+	if err != nil {
+		return userProjects{}, fmt.Errorf("get user projects: %w", err)
+	}
+	defer rows.Close()
 
-    projects := userProjects{
-        id: userID,
-        projectsList: make([]project, 0),
-    }
+	projects := userProjects{
+		id:           userID,
+		projectsList: make([]project, 0),
+	}
 
-    for rows.Next() {
-        var project project
+	for rows.Next() {
+		var project project
 
-        err := rows.Scan(
-            &project.id,
-            &project.name,
-            &project.desc,
-            &project.defaultBranch,
-        )
-        if err != nil {
-            return userProjects{}, fmt.Errorf("scan project: %w", err)
-        }
+		err := rows.Scan(
+			&project.id,
+			&project.name,
+			&project.desc,
+			&project.defaultBranch,
+		)
+		if err != nil {
+			return userProjects{}, fmt.Errorf("scan project: %w", err)
+		}
 
-        projects.projectsList = append(projects.projectsList, project)
-    }
+		projects.projectsList = append(projects.projectsList, project)
+	}
 
-    if err := rows.Err(); err != nil {
-        return userProjects{}, fmt.Errorf("iterate projects: %w", err)
-    }
+	if err := rows.Err(); err != nil {
+		return userProjects{}, fmt.Errorf("iterate projects: %w", err)
+	}
 
-    return projects, nil
+	return projects, nil
 }
 
 func (pr *ProjectRepository) GetProjectByID(ctx context.Context, projectID int64, userID int64) (fullProject, error) {
-    const query = `
+	const query = `
         SELECT p.id, p.owner_id, p.name, p.description, p.created_at, b.id, b.name
         FROM projects p
         JOIN project_members pm ON pm.project_id = p.id
@@ -125,48 +125,48 @@ func (pr *ProjectRepository) GetProjectByID(ctx context.Context, projectID int64
         WHERE p.id = $1 AND pm.user_id = $2
     `
 
-    var project fullProject
-    err := pr.db.QueryRow(ctx, query, projectID, userID).Scan(&project.id, &project.ownerID, &project.name, &project.desc, &project.createdAt, &project.defaultBranchID, &project.defaultBranchName)
-    if err != nil {
-        if errors.Is(err, pgx.ErrNoRows) {
-            return fullProject{}, ErrProjectNotFound
-        }
-        return fullProject{}, fmt.Errorf("get project by id: %w", err)
-    }
+	var project fullProject
+	err := pr.db.QueryRow(ctx, query, projectID, userID).Scan(&project.id, &project.ownerID, &project.name, &project.desc, &project.createdAt, &project.defaultBranchID, &project.defaultBranchName)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return fullProject{}, ErrProjectNotFound
+		}
+		return fullProject{}, fmt.Errorf("get project by id: %w", err)
+	}
 
-    return project, nil
+	return project, nil
 }
 
 func (pr *ProjectRepository) AddMember(ctx context.Context, projectID, ownerID, memberID int64) error {
-    const query = `
+	const query = `
         INSERT INTO project_members (project_id, user_id)
         SELECT id, $3
         FROM projects
         WHERE id = $1 AND owner_id = $2
     `
 
-    tag, err := pr.db.Exec(ctx, query, projectID, ownerID, memberID)
-    if err != nil {
-        var pgErr *pgconn.PgError
-    
-        if errors.As(err, &pgErr) {
-            switch {
-            case pgErr.Code == "23505" &&
-                pgErr.ConstraintName == "project_members_pkey":
-                return ErrMemberAlreadyExists
-    
-            case pgErr.Code == "23503" &&
-                pgErr.ConstraintName == "project_members_user_id_fkey":
-                return ErrUserNotFound
-            }
-        }
-    
-        return fmt.Errorf("add project member: %w", err)
-    }
+	tag, err := pr.db.Exec(ctx, query, projectID, ownerID, memberID)
+	if err != nil {
+		var pgErr *pgconn.PgError
 
-    if tag.RowsAffected() == 0 {
-        return ErrProjectNotFound
-    }
+		if errors.As(err, &pgErr) {
+			switch {
+			case pgErr.Code == "23505" &&
+				pgErr.ConstraintName == "project_members_pkey":
+				return ErrMemberAlreadyExists
 
-    return nil
+			case pgErr.Code == "23503" &&
+				pgErr.ConstraintName == "project_members_user_id_fkey":
+				return ErrUserNotFound
+			}
+		}
+
+		return fmt.Errorf("add project member: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return ErrProjectNotFound
+	}
+
+	return nil
 }
