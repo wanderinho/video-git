@@ -9,3 +9,4 @@ var ErrSizeName = errors.New("project name or branch name cannot be more than 10
 var ErrProjectNotFound = errors.New("project not found")
 var ErrMemberAlreadyExists = errors.New("member already exists")
 var ErrUserNotFound = errors.New("user not found")
+var ErrBranchNotFound = errors.New("branch not found")

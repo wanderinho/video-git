@@ -154,3 +154,41 @@ func (ph *ProjectHandler) AddMember(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, echo.Map{"message": "member was added successfully"})
 }
+
+func (ph *ProjectHandler) ChangeDefaultBranch(c echo.Context) error {
+	userID, ok := auth.UserIDFromContext(c)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "unauthorized"})
+	}
+
+	projectID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || projectID <= 0 {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid project id"})
+	}
+
+	var req ChangeBranchRequest
+	if err = c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid request body"})
+	}
+
+	if req.BranchID <= 0 {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid branch id"})
+	}
+
+	err = ph.service.ChangeDefaultBranch(c.Request().Context(), userID, projectID, req.BranchID)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrProjectNotFound):
+			return c.JSON(http.StatusNotFound, echo.Map{"message": "project not found"})
+
+		case errors.Is(err, ErrBranchNotFound):
+			return c.JSON(http.StatusNotFound, echo.Map{"message": "branch not found in this project"})
+
+		default:
+			c.Logger().Error(err)
+			return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
+		}
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{"message": "branch was changed successfully"})
+}

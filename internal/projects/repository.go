@@ -116,7 +116,7 @@ func (pr *ProjectRepository) ListByUser(ctx context.Context, userID int64) (user
 	return projects, nil
 }
 
-func (pr *ProjectRepository) GetProjectByID(ctx context.Context, projectID int64, userID int64) (fullProject, error) {
+func (pr *ProjectRepository) GetProjectByID(ctx context.Context, projectID, userID int64) (fullProject, error) {
 	const query = `
         SELECT p.id, p.owner_id, p.name, p.description, p.created_at, b.id, b.name
         FROM projects p
@@ -166,6 +166,44 @@ func (pr *ProjectRepository) AddMember(ctx context.Context, projectID, ownerID, 
 
 	if tag.RowsAffected() == 0 {
 		return ErrProjectNotFound
+	}
+
+	return nil
+}
+
+func (pr *ProjectRepository) ChangeDefaultBranch(ctx context.Context, userID, projectID, branchID int64) error {
+	tx, err := pr.db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin change default branch transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	var id int64
+	err = tx.QueryRow(ctx, `SELECT id FROM projects WHERE id = $1 AND owner_id = $2 FOR UPDATE`, projectID, userID).Scan(&id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrProjectNotFound
+		}
+		return fmt.Errorf("check project ownership: %w", err)
+	}
+
+	var exists bool
+	err = tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM branches WHERE id = $1 AND project_id = $2)`, branchID, projectID).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("check branch: %w", err)
+	}
+
+	if !exists {
+		return ErrBranchNotFound
+	}
+
+	_, err = tx.Exec(ctx, `UPDATE projects SET default_branch_id = $1 WHERE id = $2`, branchID, projectID)
+	if err != nil {
+		return fmt.Errorf("update default branch: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit change default branch: %w", err)
 	}
 
 	return nil

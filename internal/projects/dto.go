@@ -33,3 +33,7 @@ type FullProjectResponse struct {
 type AddMemberRequest struct {
 	UserID int64 `json:"user_id"`
 }
+
+type ChangeBranchRequest struct {
+	BranchID int64 `json:"branch_id"`
+}

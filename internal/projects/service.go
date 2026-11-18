@@ -15,6 +15,7 @@ type Repository interface {
 	ListByUser(ctx context.Context, userID int64) (userProjects, error)
 	GetProjectByID(ctx context.Context, projectID int64, userID int64) (fullProject, error)
 	AddMember(ctx context.Context, projectID, ownerID, memberID int64) error
+	ChangeDefaultBranch(ctx context.Context, userID, projectID, branchID int64) error
 }
 
 func NewProjectService(projectRepo Repository) *ProjectService {
@@ -63,4 +64,8 @@ func (ps *ProjectService) GetProjectByID(ctx context.Context, projectID, userID 
 
 func (ps *ProjectService) AddMember(ctx context.Context, projectID, ownerID, memberID int64) error {
 	return ps.projectRepo.AddMember(ctx, projectID, ownerID, memberID)
+}
+
+func (ps *ProjectService) ChangeDefaultBranch(ctx context.Context, userID, projectID, branchID int64) error {
+	return ps.projectRepo.ChangeDefaultBranch(ctx, userID, projectID, branchID)
 }
