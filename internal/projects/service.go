@@ -14,6 +14,7 @@ type Repository interface {
 	Create(ctx context.Context, createProjectForm createProjectParams) (project, error)
 	ListByUser(ctx context.Context, userID int64) (userProjects, error)
 	GetProjectByID(ctx context.Context, projectID int64, userID int64) (fullProject, error)
+	AddMember(ctx context.Context, projectID, ownerID, memberID int64) error
 }
 
 func NewProjectService(projectRepo Repository) *ProjectService {
@@ -58,4 +59,8 @@ func (ps *ProjectService) ListByUser(ctx context.Context, userID int64) (userPro
 
 func (ps *ProjectService) GetProjectByID(ctx context.Context, projectID, userID int64) (fullProject, error) {
 	return ps.projectRepo.GetProjectByID(ctx, projectID, userID)
+}
+
+func (ps *ProjectService) AddMember(ctx context.Context, projectID, ownerID, memberID int64) error {
+	return ps.projectRepo.AddMember(ctx, projectID, ownerID, memberID)
 }

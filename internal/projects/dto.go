@@ -29,3 +29,7 @@ type FullProjectResponse struct {
 	DefaultBranchID   int64 `json:"default_branch_id"`
 	DefaultBranchName string `json:"default_branch_name"`
 }
+
+type AddMemberRequest struct {
+    UserID int64 `json:"user_id"`
+}

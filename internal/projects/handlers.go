@@ -104,12 +104,53 @@ func (ph *ProjectHandler) GetProjectByID(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, FullProjectResponse{
-		ID: project.id,
-		OwnerID: project.ownerID,
-		Name: project.name,
-		Desc: project.desc,
-		CreatedAt: project.createdAt,
-		DefaultBranchID: project.defaultBranchID,
+		ID:                project.id,
+		OwnerID:           project.ownerID,
+		Name:              project.name,
+		Desc:              project.desc,
+		CreatedAt:         project.createdAt,
+		DefaultBranchID:   project.defaultBranchID,
 		DefaultBranchName: project.defaultBranchName,
 	})
+}
+
+func (ph *ProjectHandler) AddMember(c echo.Context) error {
+	userID, ok := auth.UserIDFromContext(c)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "unauthorized"})
+	}
+
+	projectID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || projectID <= 0 {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid project id"})
+	}
+
+	var req AddMemberRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid request body"})
+	}
+
+	if req.UserID <= 0 {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid user id"})
+	}
+
+	err = ph.service.AddMember(c.Request().Context(), projectID, userID, req.UserID)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrUserNotFound):
+			return c.JSON(http.StatusNotFound, echo.Map{"message": "user not found"})
+
+		case errors.Is(err, ErrProjectNotFound):
+			return c.JSON(http.StatusNotFound, echo.Map{"message": "project not found"})
+
+		case errors.Is(err, ErrMemberAlreadyExists):
+			return c.JSON(http.StatusConflict, echo.Map{"message": "the user is already a member of this project"})
+
+		default:
+			c.Logger().Error(err)
+			return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
+		}
+	}
+
+	return c.JSON(http.StatusCreated, echo.Map{"message": "member was added successfully"})
 }

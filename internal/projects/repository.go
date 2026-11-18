@@ -136,3 +136,37 @@ func (pr *ProjectRepository) GetProjectByID(ctx context.Context, projectID int64
 
     return project, nil
 }
+
+func (pr *ProjectRepository) AddMember(ctx context.Context, projectID, ownerID, memberID int64) error {
+    const query = `
+        INSERT INTO project_members (project_id, user_id)
+        SELECT id, $3
+        FROM projects
+        WHERE id = $1 AND owner_id = $2
+    `
+
+    tag, err := pr.db.Exec(ctx, query, projectID, ownerID, memberID)
+    if err != nil {
+        var pgErr *pgconn.PgError
+    
+        if errors.As(err, &pgErr) {
+            switch {
+            case pgErr.Code == "23505" &&
+                pgErr.ConstraintName == "project_members_pkey":
+                return ErrMemberAlreadyExists
+    
+            case pgErr.Code == "23503" &&
+                pgErr.ConstraintName == "project_members_user_id_fkey":
+                return ErrUserNotFound
+            }
+        }
+    
+        return fmt.Errorf("add project member: %w", err)
+    }
+
+    if tag.RowsAffected() == 0 {
+        return ErrProjectNotFound
+    }
+
+    return nil
+}
