@@ -16,6 +16,7 @@ type Repository interface {
 	GetProjectByID(ctx context.Context, projectID int64, userID int64) (fullProject, error)
 	AddMember(ctx context.Context, projectID, ownerID, memberID int64) error
 	ChangeDefaultBranch(ctx context.Context, userID, projectID, branchID int64) error
+	CreateBranch(ctx context.Context, createBranch createBranchRequest) (createBranchResponse, error)
 }
 
 func NewProjectService(projectRepo Repository) *ProjectService {
@@ -68,4 +69,20 @@ func (ps *ProjectService) AddMember(ctx context.Context, projectID, ownerID, mem
 
 func (ps *ProjectService) ChangeDefaultBranch(ctx context.Context, userID, projectID, branchID int64) error {
 	return ps.projectRepo.ChangeDefaultBranch(ctx, userID, projectID, branchID)
+}
+
+func (ps *ProjectService) CreateBranch(ctx context.Context, name string, userID, commitID, projectID int64) (createBranchResponse, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return createBranchResponse{}, ErrInvalidBranchName
+	}
+
+	createBranch := createBranchRequest{
+		userID:    userID,
+		commitID:  commitID,
+		projectID: projectID,
+		name:      name,
+	}
+
+	return ps.projectRepo.CreateBranch(ctx, createBranch)
 }

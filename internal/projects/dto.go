@@ -37,3 +37,15 @@ type AddMemberRequest struct {
 type ChangeBranchRequest struct {
 	BranchID int64 `json:"branch_id"`
 }
+
+type CreateBranchRequest struct {
+	CommitID int64  `json:"commit_id"`
+	Name     string `json:"name"`
+}
+
+type CreateBranchResponse struct {
+	ID           int64     `json:"id"`
+	Name         string    `json:"name"`
+	HeadCommitID int64     `json:"head_commit_id"`
+	CreatedAt    time.Time `json:"created_at"`
+}

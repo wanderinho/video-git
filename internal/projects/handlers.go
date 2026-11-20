@@ -192,3 +192,67 @@ func (ph *ProjectHandler) ChangeDefaultBranch(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, echo.Map{"message": "branch was changed successfully"})
 }
+
+func (ph *ProjectHandler) CreateBranch(c echo.Context) error {
+	userID, ok := auth.UserIDFromContext(c)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "unauthorized"})
+	}
+
+	projectID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || projectID <= 0 {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid project id"})
+	}
+
+	var req CreateBranchRequest
+	if err = c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid request body"})
+	}
+
+	if req.CommitID <= 0 {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid commit id"})
+	}
+
+	res, err := ph.service.CreateBranch(c.Request().Context(), req.Name, userID, req.CommitID, projectID)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrInvalidBranchName):
+			return c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "invalid branch name",
+			})
+
+		case errors.Is(err, ErrProjectNotFound):
+			return c.JSON(http.StatusNotFound, echo.Map{
+				"message": "project not found",
+			})
+
+		case errors.Is(err, ErrCommitNotFound):
+			return c.JSON(http.StatusNotFound, echo.Map{
+				"message": "commit not found",
+			})
+
+		case errors.Is(err, ErrCommitNotReady):
+			return c.JSON(http.StatusConflict, echo.Map{
+				"message": "commit is not ready",
+			})
+
+		case errors.Is(err, ErrBranchAlreadyExists):
+			return c.JSON(http.StatusConflict, echo.Map{
+				"message": "branch already exists",
+			})
+
+		default:
+			c.Logger().Error(err)
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"message": "internal server error",
+			})
+		}
+	}
+
+	return c.JSON(http.StatusCreated, CreateBranchResponse{
+		ID:           res.id,
+		Name:         res.name,
+		HeadCommitID: res.headCommitID,
+		CreatedAt:    res.createdAt,
+	})
+}

@@ -1,6 +1,8 @@
 package projects
 
-import "time"
+import (
+	"time"
+)
 
 type createProjectParams struct {
 	ownerID     int64
@@ -29,4 +31,18 @@ type fullProject struct {
 type userProjects struct {
 	id           int64
 	projectsList []project
+}
+
+type createBranchRequest struct {
+	userID    int64
+	commitID  int64
+	projectID int64
+	name      string
+}
+
+type createBranchResponse struct {
+	id           int64
+	name         string
+	headCommitID int64
+	createdAt    time.Time
 }

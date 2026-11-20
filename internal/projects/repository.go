@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -207,4 +208,68 @@ func (pr *ProjectRepository) ChangeDefaultBranch(ctx context.Context, userID, pr
 	}
 
 	return nil
+}
+
+func (pr *ProjectRepository) CreateBranch(ctx context.Context, createBranch createBranchRequest) (createBranchResponse, error) {
+	tx, err := pr.db.Begin(ctx)
+	if err != nil {
+		return createBranchResponse{}, fmt.Errorf("begin create branch transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	var exists bool
+	err = tx.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM project_members WHERE project_id = $1 AND user_id = $2)",
+		createBranch.projectID, createBranch.userID).Scan(&exists)
+	if err != nil {
+		return createBranchResponse{}, fmt.Errorf("check project or user: %w", err)
+	}
+	if !exists {
+		return createBranchResponse{}, ErrProjectNotFound
+	}
+
+	var commitStatus string
+	err = tx.QueryRow(ctx, `
+    SELECT c.status
+    FROM commits c
+    JOIN branches b ON b.id = c.branch_id
+    WHERE c.id = $1
+      AND b.project_id = $2
+	`, createBranch.commitID, createBranch.projectID).Scan(&commitStatus)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return createBranchResponse{}, ErrCommitNotFound
+	}
+	if err != nil {
+		return createBranchResponse{}, fmt.Errorf("check commit: %w", err)
+	}
+	if commitStatus != "ready" {
+		return createBranchResponse{}, ErrCommitNotReady
+	}
+
+	var branchID int64
+	var createdAt time.Time
+	err = tx.QueryRow(ctx, "INSERT INTO branches (project_id, name, created_by, head_commit_id) VALUES ($1, $2, $3, $4) RETURNING id, created_at",
+		createBranch.projectID, createBranch.name, createBranch.userID, createBranch.commitID).Scan(&branchID, &createdAt)
+	if err != nil {
+		var pgErr *pgconn.PgError
+
+		if errors.As(err, &pgErr) &&
+			pgErr.Code == "23505" &&
+			pgErr.ConstraintName == "branches_project_name_unique" {
+			return createBranchResponse{}, ErrBranchAlreadyExists
+		}
+
+		return createBranchResponse{}, fmt.Errorf("insert branch: %w", err)
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		return createBranchResponse{}, fmt.Errorf("commit create branch transaction: %w", err)
+	}
+
+	return createBranchResponse{
+		id:           branchID,
+		name:         createBranch.name,
+		headCommitID: createBranch.commitID,
+		createdAt:    createdAt,
+	}, nil
 }
