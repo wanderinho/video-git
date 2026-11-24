@@ -256,3 +256,46 @@ func (ph *ProjectHandler) CreateBranch(c echo.Context) error {
 		CreatedAt:    res.createdAt,
 	})
 }
+
+func (ph *ProjectHandler) GetBranches(c echo.Context) error {
+	userID, ok := auth.UserIDFromContext(c)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"message": "unauthorized"})
+	}
+
+	projectID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || projectID <= 0 {
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid project id"})
+	}
+
+	res, err := ph.service.GetBranches(c.Request().Context(), userID, projectID)
+	if err != nil {
+		if errors.Is(err, ErrProjectNotFound) {
+			return c.JSON(http.StatusNotFound, echo.Map{"message": "project not found"})
+		}
+
+		c.Logger().Error(err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
+	}
+
+	branches := ProjectBranches{
+		ProjectID:       res.projectID,
+		DefaultBranchID: res.defaultBranchID,
+		Branches:        make([]Branch, 0, len(res.branches)),
+	}
+	for _, v := range res.branches {
+		branch := Branch{
+			ID:           v.id,
+			Name:         v.name,
+			CreatedBy:    v.createdBy,
+			CreatedAt:    v.createdAt,
+			HeadCommitID: v.headCommitID,
+		}
+
+		branches.Branches = append(branches.Branches, branch)
+	}
+	branches.ProjectID = projectID
+	branches.DefaultBranchID = res.defaultBranchID
+
+	return c.JSON(http.StatusOK, branches)
+}

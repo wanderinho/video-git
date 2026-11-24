@@ -17,6 +17,7 @@ type Repository interface {
 	AddMember(ctx context.Context, projectID, ownerID, memberID int64) error
 	ChangeDefaultBranch(ctx context.Context, userID, projectID, branchID int64) error
 	CreateBranch(ctx context.Context, createBranch createBranchRequest) (createBranchResponse, error)
+	GetBranches(ctx context.Context, userID, projectID int64) (projectBranches, error)
 }
 
 func NewProjectService(projectRepo Repository) *ProjectService {
@@ -85,4 +86,8 @@ func (ps *ProjectService) CreateBranch(ctx context.Context, name string, userID,
 	}
 
 	return ps.projectRepo.CreateBranch(ctx, createBranch)
+}
+
+func (ps *ProjectService) GetBranches(ctx context.Context, userID, projectID int64) (projectBranches, error) {
+	return ps.projectRepo.GetBranches(ctx, userID, projectID)
 }

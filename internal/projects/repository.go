@@ -273,3 +273,60 @@ func (pr *ProjectRepository) CreateBranch(ctx context.Context, createBranch crea
 		createdAt:    createdAt,
 	}, nil
 }
+
+func (pr *ProjectRepository) GetBranches(ctx context.Context, userID, projectID int64) (projectBranches, error) {
+    var defaultBranchID int64
+
+    err := pr.db.QueryRow(ctx, `
+        SELECT p.default_branch_id
+        FROM projects p
+        JOIN project_members pm ON pm.project_id = p.id
+        WHERE p.id = $1 AND pm.user_id = $2`, projectID, userID).Scan(&defaultBranchID)
+
+    if errors.Is(err, pgx.ErrNoRows) {
+        return projectBranches{}, ErrProjectNotFound
+    }
+    if err != nil {
+        return projectBranches{}, fmt.Errorf("check project membership: %w", err)
+    }
+
+    rows, err := pr.db.Query(ctx, `
+        SELECT b.id, b.name, u.username, b.created_at, b.head_commit_id
+        FROM branches b
+        JOIN users u ON u.id = b.created_by
+        WHERE b.project_id = $1
+        ORDER BY b.created_at ASC, b.id ASC`, projectID)
+
+    if err != nil {
+        return projectBranches{}, fmt.Errorf("get branches: %w", err)
+    }
+    defer rows.Close()
+
+    branches := projectBranches{
+        projectID:       projectID,
+        defaultBranchID: defaultBranchID,
+        branches:        make([]branchInfo, 0),
+    }
+    for rows.Next() {
+        var branch branchInfo
+
+        err := rows.Scan(
+            &branch.id,
+            &branch.name,
+            &branch.createdBy,
+            &branch.createdAt,
+            &branch.headCommitID,
+        )
+        if err != nil {
+            return projectBranches{}, fmt.Errorf("scan branch: %w", err)
+        }
+
+        branches.branches = append(branches.branches, branch)
+    }
+
+    if err := rows.Err(); err != nil {
+        return projectBranches{}, fmt.Errorf("iterate branches: %w", err)
+    }
+
+    return branches, nil
+}

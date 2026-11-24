@@ -49,3 +49,17 @@ type CreateBranchResponse struct {
 	HeadCommitID int64     `json:"head_commit_id"`
 	CreatedAt    time.Time `json:"created_at"`
 }
+
+type Branch struct {
+	ID           int64 `json:"id"`
+	Name         string `json:"name"`
+	CreatedBy    string `json:"created_by"`
+	CreatedAt    time.Time `json:"created_at"`
+	HeadCommitID *int64 `json:"head_commit_id"`
+}
+
+type ProjectBranches struct {
+	ProjectID int64 `json:"project_id"`
+	DefaultBranchID int64 `json:"default_branch_id"`
+	Branches []Branch `json:"branches"`
+}

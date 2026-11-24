@@ -46,3 +46,17 @@ type createBranchResponse struct {
 	headCommitID int64
 	createdAt    time.Time
 }
+
+type branchInfo struct {
+	id           int64
+	name         string
+	createdBy    string
+	createdAt    time.Time
+	headCommitID *int64
+}
+
+type projectBranches struct {
+	projectID       int64
+	defaultBranchID int64
+	branches        []branchInfo
+}
